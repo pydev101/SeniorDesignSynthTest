@@ -23,7 +23,7 @@ ax.set_ylabel("Amplitude")
 plt.ion()
 
 phase = 0
-
+# a
 def audio_callback(outdata, frames, time, status):
     global phase, fft_data
 
