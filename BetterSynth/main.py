@@ -30,7 +30,7 @@ class Note:
     # Decay (s)
     # Sustain (amplitude)
     # Release (s)
-    def __init__(self, freq, attack, decay, sustain, release):
+    def __init__(self, key, freq, attack, decay, sustain, release):
         self.freq = freq
         self.A = attack
         self.D = decay
@@ -39,34 +39,47 @@ class Note:
 
         self.amplitude = 0
         self.startTime = None
+        self.key = key
 
         self.envelope = np.vectorize(self.envelopeFunct)
+        self.wasKeyPressed = None
+        self.releaseTime = None
 
     def getClip(self, t):
-        if self.startTime is None:
+        isKeyPressed = keyboard.is_pressed(self.key)
+        if isKeyPressed and not self.wasKeyPressed:
             self.startTime = t[0]
-        t = t - self.startTime
+        if not isKeyPressed and self.wasKeyPressed:
+            self.releaseTime = t[0]
+        self.wasKeyPressed = isKeyPressed
 
-        self.amplitude = self.envelope(t)
+        if self.startTime is not None:
+            t = t - self.startTime
+            self.amplitude = self.envelope(t, isKeyPressed)
+            if t[0] > self.A and self.amplitude[0] < 0.001:
+                self.startTime = None
+        else:
+            self.amplitude = 0 * t
+
         return np.multiply(self.amplitude, np.sin(2 * np.pi * self.freq * t))
 
-    def envelopeFunct(self, t):
+    def envelopeFunct(self, t, isKeyPressed):
         aMax = 1
-        buttonDown = True
 
-        if buttonDown:
-            amp = t * (aMax/self.A) if t < self.A else 0
-            amp = aMax - ((t-self.A) * ((aMax-self.S) / self.D)) if self.A < t < self.A+self.D else amp
-            amp = self.S if self.A+self.D < t else amp
-        else:
-            pass
+        amp = t * (aMax/self.A) if t < self.A else 0
+        amp = aMax - ((t-self.A) * ((aMax-self.S) / self.D)) if self.A < t < self.A+self.D else amp
+        amp = self.S if self.A+self.D < t else amp
 
-        # amp = aMax - ((self.D - self.A) * (1 / self.D)) if self.A+self.D < t < self.A + self.D + self.S else amp
+        if not isKeyPressed:
+            tStat = max(self.releaseTime, self.A+self.D)
+            amp = self.S - (t-tStat)*(self.S / self.R) if self.A + self.D < t else amp
+
+
         if amp < 0:
             return 0
         return amp
 
-notes = [Note(300, 1, 1, 0.5, 1), Note(432, 0.3, 8, 0.5, 1)]
+notes = [Note('a', 300, 1, 1, 0.5, 1), Note('b', 432, 0.3, 0.2, 0.5, 1)]
 
 def audio_callback(outdata, frames, time, status):
     global phase, fft_data
