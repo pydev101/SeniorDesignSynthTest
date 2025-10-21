@@ -49,12 +49,16 @@ class Note:
         isKeyPressed = keyboard.is_pressed(self.key)
         if isKeyPressed and not self.wasKeyPressed:
             self.startTime = t[0]
+            self.releaseTime = None
+
+        if self.startTime is not None:
+            t = t - self.startTime
+
         if not isKeyPressed and self.wasKeyPressed:
             self.releaseTime = t[0]
         self.wasKeyPressed = isKeyPressed
 
         if self.startTime is not None:
-            t = t - self.startTime
             self.amplitude = self.envelope(t, isKeyPressed)
             if t[0] > self.A and self.amplitude[0] < 0.001:
                 self.startTime = None
@@ -72,14 +76,20 @@ class Note:
 
         if not isKeyPressed:
             tStat = max(self.releaseTime, self.A+self.D)
-            amp = self.S - (t-tStat)*(self.S / self.R) if self.A + self.D < t else amp
-
+            if self.A + self.D < t:
+                amp = self.S - (t-tStat)*(self.S / self.R)
 
         if amp < 0:
             return 0
         return amp
 
-notes = [Note('a', 300, 1, 1, 0.5, 1), Note('b', 432, 0.3, 0.2, 0.5, 1)]
+notes = [Note('c', 261.63, 0.1, 0.1, 0.5, 0.1), # C
+         Note('d', 293.66, 0.1, 0.1, 0.5, 0.1), # D
+         Note('e', 329.63, 0.1, 0.1, 0.5, 0.1), # E
+         Note('f', 349.23, 0.1, 0.1, 0.5, 0.1), # F
+         Note('g', 392, 0.1, 0.1, 0.5, 0.1), # G
+         Note('a', 440, 0.1, 0.1, 0.5, 0.1), # A
+         Note('b', 493.88, 0.1, 0.1, 0.5, 0.1),] # B
 
 def audio_callback(outdata, frames, time, status):
     global phase, fft_data
