@@ -5,6 +5,7 @@ import threading
 import matplotlib.pyplot as plt
 from scipy.fft import fft, fftfreq
 import keyboard
+import math
 
 # Parameters
 sample_rate = 44100  # samples per second
@@ -16,7 +17,7 @@ freqs = fftfreq(block_size, 1 / sample_rate)
 
 fig, ax = plt.subplots()
 line, = ax.plot(freqs[:block_size // 2], np.zeros(block_size // 2))
-ax.set_xlim(0, 5000)  # Show up to 5 kHz
+ax.set_xlim(0, 20000)  # Show up to 5 kHz
 ax.set_ylim(0, 1)
 ax.set_xlabel("Frequency [Hz]")
 ax.set_ylabel("Amplitude")
@@ -65,7 +66,7 @@ class Note:
         else:
             self.amplitude = 0 * t
 
-        return np.multiply(self.amplitude, np.sin(2 * np.pi * self.freq * t))
+        return np.multiply(self.amplitude, np.sin(2 * np.pi * self.freq * t ))
 
     def envelopeFunct(self, t, isKeyPressed):
         aMax = 1
@@ -83,13 +84,14 @@ class Note:
             return 0
         return amp
 
-notes = [Note('c', 261.63, 0.1, 0.1, 0.5, 0.1), # C
-         Note('d', 293.66, 0.1, 0.1, 0.5, 0.1), # D
-         Note('e', 329.63, 0.1, 0.1, 0.5, 0.1), # E
-         Note('f', 349.23, 0.1, 0.1, 0.5, 0.1), # F
-         Note('g', 392, 0.1, 0.1, 0.5, 0.1), # G
-         Note('a', 440, 0.1, 0.1, 0.5, 0.1), # A
-         Note('b', 493.88, 0.1, 0.1, 0.5, 0.1),] # B
+octave = 4
+notes = [Note('c', 261.63 * math.pow(2, octave-4), 0.1, 0.1, 0.5, 0.1), # C
+         Note('d', 293.66 * math.pow(2, octave-4), 0.1, 0.1, 0.5, 0.1), # D
+         Note('e', 329.63 * math.pow(2, octave-4), 0.1, 0.1, 0.5, 0.1), # E
+         Note('f', 349.23 * math.pow(2, octave-4), 0.1, 0.1, 0.5, 0.1), # F
+         Note('g', 392 * math.pow(2, octave-4), 0.1, 0.1, 0.5, 0.1), # G
+         Note('a', 440 * math.pow(2, octave-4), 0.1, 0.1, 0.5, 0.1), # A
+         Note('b', 493.88 * math.pow(2, octave-4), 0.1, 0.1, 0.5, 0.1),] # B
 
 def audio_callback(outdata, frames, time, status):
     global phase, fft_data
